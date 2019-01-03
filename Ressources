@@ -1,0 +1,18 @@
+https://rosettacode.org/wiki/Bitmap/Write_a_PPM_file#C
+
+https://sourceforge.net/p/netpbm/code/HEAD/tree/stable/lib/libppm1.c
+
+https://stackoverflow.com/questions/2693631/read-ppm-file-and-store-it-in-an-array-coded-with-c
+
+http://netpbm.sourceforge.net/doc/ppm.html
+
+LUTS : 
+https://github.com/fiji/fiji/tree/master/luts
+https://www.mochima.com/articles/LUT/LUT.html
+
+http://paulbourke.net/dataformats/ppm/
+
+http://homepages.inf.ed.ac.uk/rbf/BOOKS/PHILLIPS/cips2ed.pdf
+
+https://docs.opencv.org/2.4/doc/tutorials/core/basic_linear_transform/basic_linear_transform.html
+
