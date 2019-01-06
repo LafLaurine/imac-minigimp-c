@@ -3,148 +3,185 @@
 #include <stdint.h>
 #include <math.h>
 #include "lut.h"
+#include "pixel.h"
 
-//allocate memory for LUT list
-bool newListLUT(ListeLUT *liste)
+
+
+void init(LUT* lut, Pixel* pxl, int height, int width)
 {
-    liste->first = liste->last = NULL;
-    return true;
+    lut->rvb = pxl;
+    lut->size = width * height;
+    lut->next = NULL;
+    lut->previous = NULL;
 }
 
-void freeListeLUT(ListeLUT *liste) {
-    if(!liste->first)
+
+/*
+void ListeLUTs_retirerDerniere(ListeLUTs *liste) {
+    if(!liste->derniere)
         return;
-    LUT *current;
-    for(current=liste->first ; current!=liste->last ; current=current->next)
-        free(current);
-    free(current);
-}
-
-bool addLastLUT(ListeLUT *liste) { 
-    LUT *new = calloc(1, sizeof(LUT));
-    if(!new) {
-        fputs("Can't add LUT", stderr);
-        return false;
-    }
-    if(liste->last) {
-        new->before = liste->last;
-        liste->last->next = new;
-        liste->last = new;
-    } else
-        liste->first = liste->last = new;
-
-    /*liste->last->fonction = LUT_inversion;
-    liste->derniere->param1 = 127;*/
-    return true; 
-}
-
-void removeLastLUT(ListeLUT *liste) {
-    if(!liste->last)
-        return;
-    LUT *prec = liste->last->before;
-    free(liste->last);
-    liste->last = prec;
-    if(liste->last)
-        liste->last->next = NULL;
+    LUT *prec = liste->derniere->precedente;
+    free(liste->derniere);
+    liste->derniere = prec;
+    if(liste->derniere)
+        liste->derniere->suivante = NULL;
     else
-        liste->last = liste->first = NULL;
-}
-void removeFirstLUT(ListeLUT *liste) {
-    LUT *first = liste->first;
-    liste->first = liste->first->next;
-    if(!liste->first)
-        liste->last = NULL;
-    free(first);
+        liste->derniere = liste->premiere = NULL;
+}*/
+
+//function copy pointer A copie dans B soit function renvoie pointer 
+
+LUT* copy(LUT* lut)
+{
+    LUT *copy = malloc(sizeof(LUT));
+    //malloc copy par rapport taille lut
+    copy->rvb = lut->rvb;
+    memcpy(copy,lut,sizeof(LUT));
+    //memcpy lut vers copy
+
+    return copy;
 }
 
-
-void LUT_invert(LUT *lut) {
-    size_t i, inv;
-    for(i=0, inv=255 ; i<256 ; ++i, --inv)
+LUT* invert(LUT *lut) {
+    LUT* copied = copy(lut);
+    for(int i=0;i<copied->size;i++)
     {
-        lut->r[i] = lut->v[i] = lut->b[i] = inv;
+            copied->rvb[i].r = 255-copied->rvb[i].r;
+            copied->rvb[i].v = 255-copied->rvb[i].v;
+            copied->rvb[i].b = 255-copied->rvb[i].b;
     }
-       
-}
-
-void LUT_sepia(LUT *lut) {
-    const unsigned char sepia[3*256];
-    size_t i;
-    for(i=0 ; i<256 ; ++i) {
-        lut->r[i] = sepia[3*i];
-        lut->v[i] = sepia[3*i+1];
-        lut->b[i] = sepia[3*i+2];
-    }
+    return copied;
 }
 
 
 /* La mission des fonctions suivantes : 
- * Remplir lut->r, lut->v et lut->b en fonction de lut->param1.*/
+ Remplir les pixels  en fonction de param.*/
 #define min(a,b) ((a)<(b) ? (a) : (b))
 #define max(a,b) ((a)>(b) ? (a) : (b))
 
 
-void LUT_addLum(LUT *lut) {
-    size_t i;
-    for(i=0; i<256; i++) {
-        lut->r[i] = min(255, lut->param1+i);
-        lut->v[i] = min(255, lut->param1+i);
-        lut->b[i] = min(255, lut->param1+i);
+LUT* addLum(LUT *lut, int param) {
+    LUT* copied = copy(lut);
+    for(int i=0; i<copied->size; i++) {
+        copied->rvb[i].r = min(255, (int)(copied->rvb[i].r+param));
+        copied->rvb[i].v = min(255, (int)(copied->rvb[i].v+param));
+        copied->rvb[i].b = min(255, (int)(copied->rvb[i].b+param));
     }
+    return copied;
 }
 
-void LUT_dimLum(LUT *lut) {
-    size_t i;
-    for(i=0; i<256; i++) {
-        lut->r[i] = max(0, (int)(i-lut->param1));
-        lut->v[i] = max(0, (int)(i-lut->param1));
-        lut->b[i] = max(0, (int)(i-lut->param1));
+//NOP
+LUT* dimLum(LUT *lut, int param) {
+    LUT* copied = copy(lut);
+     for(int i=0; i<copied->size; i++) {
+        copied->rvb[i].r = max(0, (int)(copied->rvb[i].r-param));
+        copied->rvb[i].v = max(0, (int)(copied->rvb[i].v-param));
+        copied->rvb[i].b = max(0, (int)(copied->rvb[i].b-param));
     }
+    return copied;
 }
 
 // Change la valeur du contraste
-void LUT_addCon(LUT *lut) {
-    size_t i;
-
-    for (i = 0 ; i < 256 ; i++){
-        lut->r[i] = min(255, max(0, (float)lut->param1*(i - 128.) + 128.));          
-        lut->v[i] = min(255, max(0, (float)lut->param1*(i - 128.) + 128.));        
-        lut->b[i] = min(255, max(0, (float)lut->param1*(i - 128.) + 128.));
+LUT* addCon(LUT *lut, int param) {
+    LUT* copied = copy(lut);
+    for(int i=0; i<copied->size; i++) {
+        copied->rvb[i].r = min(255, max(0, (float)param*(copied->rvb[i].r  - 128.) + 128.));          
+        copied->rvb[i].v = min(255, max(0, (float)param*(copied->rvb[i].v - 128.) + 128.));        
+        copied->rvb[i].b = min(255, max(0, (float)param*(copied->rvb[i].b - 128.) + 128.));
     }
+    return copied;
 
-}
-void LUT_dimCon(LUT *lut) {
-    size_t i;
-    float a = 1. / lut->param1;
-    for (i = 0 ; i < 256 ; i++){
-        lut->r[i] = min(255, max(0, (float)a*(i - 128.) + 128.));          
-        lut->v[i] = min(255, max(0, (float)a*(i - 128.) + 128.));        
-        lut->b[i] = min(255, max(0, (float)a*(i - 128.) + 128.));
-    }
 }
 
-/* Celles-ci ne sont pas demandées. */
-void LUT_augmentationR(LUT *lut) {
-    size_t i;
-    for(i=0; i<256; i++) {
-        lut->r[i] = min(255, lut->param1+i);
-        lut->v[i] = i;
-        lut->b[i] = i;
+LUT* dimCon(LUT *lut, int param) {
+     LUT* copied = copy(lut);
+     float a = 1. / param;
+    for(int i=0; i<copied->size; i++) {
+    
+       copied->rvb[i].r = min(255, max(0, (float)a*(copied->rvb[i].r - 128.) + 128.));          
+       copied->rvb[i].v = min(255, max(0, (float)a*(copied->rvb[i].v - 128.) + 128.));        
+       copied->rvb[i].b = min(255, max(0, (float)a*(copied->rvb[i].b - 128.) + 128.));
     }
+    return copied;
 }
-void LUT_augmentationV(LUT *lut) {
-    size_t i;
-    for(i=0; i<256; i++) {
-        lut->r[i] = i;
-        lut->v[i] = min(255, lut->param1+i);
-        lut->b[i] = i;
+
+LUT* augmentationR(LUT *lut, int param) {
+    LUT* copied = copy(lut);
+    for(int i =0; i<copied->size; i++) {
+        copied->rvb[i].r = min(255, param+i);
+
     }
+    return copied;
 }
-void LUT_augmentationB(LUT *lut) {
-    size_t i;
-    for(i=0; i<256; i++) {
-        lut->r[i] = i;
-        lut->v[i] = i;
-        lut->b[i] = min(255, lut->param1+i);
+
+LUT* augmentationV(LUT *lut, int param) {
+    LUT* copied = copy(lut);
+    for(int i=0; i<copied->size; i++) {
+        copied->rvb[i].v = min(255, param+i);
     }
+    return copied;
+}
+
+LUT* augmentationB(LUT *lut, int param) {
+      LUT* copied = copy(lut);
+    for(int i=0; i<copied->size; i++) {
+        copied->rvb[i].b = min(255, param+i);
+    }
+    return copied;
+}
+
+LUT* seuil(LUT *lut)
+{
+    LUT* copied = copy(lut);
+    for(int i=0; i<copied->size; i++) {
+        if (copied->rvb[i].r <= 127 || copied->rvb[i].v <= 127 || copied->rvb[i].b <=127)
+        {
+            copied->rvb[i].r = 0;
+            copied->rvb[i].v = 0;
+            copied->rvb[i].b = 0;
+
+        }
+
+        else
+        {
+            copied->rvb[i].r = 255;
+            copied->rvb[i].v = 255;
+            copied->rvb[i].b = 255;
+        }
+       
+    }
+    return copied;
+}
+
+LUT* sepia(LUT *lut) {
+    //try to see why blue is cramed af
+    LUT* copied = copy(lut);
+    // if we want to change transparency int alpha = 255;
+    for(int i =0 ; i<copied->size; i++) {
+        int tr, tv, tb;
+        tr = 0.393*(copied->rvb[i].r) + 0.769*(copied->rvb[i].v) + 0.189*(copied->rvb[i].b);
+        tv = 0.349*(copied->rvb[i].r) + 0.686*(copied->rvb[i].v) + 0.168*(copied->rvb[i].b);
+        tb = 0.272*(copied->rvb[i].r) + 0.534*(copied->rvb[i].v) + 0.131*(copied->rvb[i].b);
+        copied->rvb[i].r = tr;
+        copied->rvb[i].v = tv;
+        copied->rvb[i].b = tb;
+    }
+    return copied;
+}
+
+LUT *saveLUT(LUT* lut) {
+    LUT* copied = copy(lut);
+    printf("in: ");
+    for (int i = 0; i <= copied->size; i++) {
+        printf("%d ", i);
+    }
+    printf("\n");
+
+    printf("to: ");
+    for (int i = 0; i <= copied->size; i++) {
+        printf("%d %d %d", copied->rvb[i].r, copied->rvb[i].v, copied->rvb[i].b);
+    }
+    printf("\n");
+
+    return copied;
 }

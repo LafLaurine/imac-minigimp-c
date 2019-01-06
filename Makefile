@@ -1,19 +1,29 @@
 CC=gcc
 CFLAGS=-Wall
+DIRNAME = $(shell basename $$PWD)
+BACKUP = $(shell date + `basename $$PWD`-%m.%d.%H.%M.zip)
+STDNAME = $(DIRNAME).zip
 
-
-mon_executable: main.o chargerImg.o lut.o
+minigimp: main.o image.o lut.o histogram.o
 	$(CC) -o $@ $^
+	@echo "COMPIL OK"
 
-main.o: main.c chargerImg.h
+main.o: main.c image.h pixel.h histogram.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-chargerImg.o: chargerImg.c chargerImg.h
+chargerImg.o: image.c image.h pixel.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
-lut.o : lut.c lut.h
+lut.o : lut.c lut.h pixel.h
+	$(CC) -o $@ -c $< $(CFLAGS)
+
+histogram.o : histogram.c histogram.h image.h pixel.h
 	$(CC) -o $@ -c $< $(CFLAGS)
 
 
 clean:
 	rm -rf *.o
+
+zip:
+	@echo "ZIP"
+	cd ..& zip -r $(BACKUP) $(DIRNAME)
