@@ -38,7 +38,7 @@ void readPPMHeader(FILE* fp, int *w, int *h)
 	}
 
 	ungetc(ch,fp);
-	fscanf(fp, "%d%d%d\n", w,h,&maxval);
+	fscanf(fp, "%d%d%d\n",w,h,&maxval);
 
 	if(maxval!=255)
 	{
@@ -54,6 +54,7 @@ int allocate(PPMImage *newImg, int width, int height)
 	}
 	//rvb pointeur sur struct pixel
 	newImg->rvb = malloc(width*height * sizeof(Pixel));
+	newImg->greyScale = malloc(sizeof(unsigned char) * width * height);
 
 	if(!newImg->rvb)
 	{
@@ -63,6 +64,9 @@ int allocate(PPMImage *newImg, int width, int height)
 
 	newImg->width = width;
 	newImg->height = height;
+
+
+
 	return EXIT_SUCCESS;
 }
 
@@ -75,12 +79,22 @@ void clear(PPMImage *img)
 			free((void *) img->rvb);
 			img->rvb = NULL;
 		}
-
 		img->width = 0;
 		img->height = 0;
 	}
 	
 }
+
+void greyScale(PPMImage *image)
+{
+	for(int i = 0; i<image->width*image->height; i++)
+	{
+		image->greyScale[i] = 0.299*image->rvb[i].r + 0.587*image->rvb[i].v + 0.114 * image->rvb[i].b;
+
+	}
+}
+
+
 
 int imageRead(PPMImage *image, char *filename)
 {
@@ -94,6 +108,7 @@ int imageRead(PPMImage *image, char *filename)
   	fread(image->rvb, sizeof(unsigned char), (size_t) size, fp);
   	if (!image->rvb) errorMsg("cannot allocate memory for new image");
 
+  	
  	fclose(fp);
  	return EXIT_SUCCESS;
 }

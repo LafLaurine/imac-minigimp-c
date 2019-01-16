@@ -2,12 +2,8 @@
 #define HISTOGRAM_H
 
 #include "image.h"
-#include "pixel.h"
 
-typedef struct Histogram{
-	unsigned int rvb[256], min, max;
-}Histogram;
+int init_histo(PPMImage* img, PPMImage* histogramme);
+void _printHistogram(PPMImage* histogram, unsigned int* histogramData, unsigned int maxData, unsigned char printColor);
 
-void histogram(Histogram *h);
-Histogram *HistoRVB(PPMImage *img, Histogram *histo);
 #endif 

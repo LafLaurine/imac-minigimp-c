@@ -1,40 +1,47 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "histogram.h"
-#include "pixel.h"
-#include "image.h"
 
-void histogram(Histogram *h)
-{
-	size_t i;
-	for (h->min=sizeof(unsigned int), h->max=0, i=0;i<256;++i)
-	{
-		if(h->rvb[i]>h->max)
-		{
-			h->max = h->rvb[i];
-		}
+//histo de la moyenne des 3 composantes
+int init_histo(PPMImage* img, PPMImage* histogramme) {
+	unsigned int greyscale[256] = { 0 };
+	unsigned int pixelAvgBrightness = 0;
+    unsigned int maxPixels = 0;
+    for (unsigned int x = 0; x < img->width; x++) {
+        for (unsigned int y = 0; y < img->height; y++) {
+                pixelAvgBrightness += img->rvb[x].r + img->rvb[x].v + img->rvb[x].b + img->rvb[y].r + img->rvb[y].v + img->rvb[y].b;
+                pixelAvgBrightness = pixelAvgBrightness/3;
+                greyscale[(unsigned char) pixelAvgBrightness] += 1;
+            if (greyscale[(unsigned char) pixelAvgBrightness] > maxPixels) {
+                maxPixels = greyscale[(unsigned char) pixelAvgBrightness];
+            }
+            pixelAvgBrightness = 0;
 
-		if(h->rvb[i]<h->min)
-		{
-			h->min = h->rvb[i];
-		}
-	}
+            }
+            
+        }
+            _printHistogram(histogramme, greyscale, maxPixels, 200);
+
+    
+    return EXIT_SUCCESS;
 }
 
-Histogram *HistoRVB(PPMImage *img, Histogram *histo)
-{
-	size_t x,y,somme;
-	int i = 0;
-	memset(histo,0,sizeof(Histogram));
-	for(y= 0; y<img->height; ++y)
-	{
-		for(x=0; x<img->width;++x)
-		{
-			i++;
-			somme = img->rvb[i].r + img->rvb[i].v + img->rvb[i].b;
-			++(histo->rvb[(unsigned int)(somme/3.f)]);
-		}
-	}
-	histogram(histo);
-	return histo;
+void _printHistogram(PPMImage* histogram, unsigned int* histogramData, unsigned int maxData, unsigned char printColor) {
+  
+    if (histogram->width != 256) {
+        printf("_printHistogram error: histogram needs to be 256px large");
+        exit(EXIT_FAILURE);
+    }
+
+    for (unsigned int y = 0; y < histogram->width; y++) {
+        long columnHeight = (histogramData[y]*histogram->height)/maxData;
+        long columnEnd = histogram->height - columnHeight;
+        for (unsigned int x = histogram->height - 1; x > columnEnd; x--) {
+                histogram->rvb[y + x * histogram->width].r = printColor;
+		        histogram->rvb[y + x * histogram->width].v = printColor;
+		        histogram->rvb[y + x * histogram->width].b = printColor;        
+		    }
+    }
 }
+
+

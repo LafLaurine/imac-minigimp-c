@@ -3,185 +3,233 @@
 #include <stdint.h>
 #include <math.h>
 #include "lut.h"
-#include "pixel.h"
 
 
 
-void init(LUT* lut, Pixel* pxl, int height, int width)
-{
-    lut->rvb = pxl;
-    lut->size = width * height;
-    lut->next = NULL;
-    lut->previous = NULL;
-}
-
-
-/*
-void ListeLUTs_retirerDerniere(ListeLUTs *liste) {
-    if(!liste->derniere)
-        return;
-    LUT *prec = liste->derniere->precedente;
-    free(liste->derniere);
-    liste->derniere = prec;
-    if(liste->derniere)
-        liste->derniere->suivante = NULL;
-    else
-        liste->derniere = liste->premiere = NULL;
-}*/
-
-//function copy pointer A copie dans B soit function renvoie pointer 
-
-LUT* copy(LUT* lut)
-{
-    LUT *copy = malloc(sizeof(LUT));
-    //malloc copy par rapport taille lut
-    copy->rvb = lut->rvb;
-    memcpy(copy,lut,sizeof(LUT));
-    //memcpy lut vers copy
-
-    return copy;
-}
-
-LUT* invert(LUT *lut) {
-    LUT* copied = copy(lut);
-    for(int i=0;i<copied->size;i++)
-    {
-            copied->rvb[i].r = 255-copied->rvb[i].r;
-            copied->rvb[i].v = 255-copied->rvb[i].v;
-            copied->rvb[i].b = 255-copied->rvb[i].b;
-    }
-    return copied;
-}
-
-
-/* La mission des fonctions suivantes : 
- Remplir les pixels  en fonction de param.*/
 #define min(a,b) ((a)<(b) ? (a) : (b))
 #define max(a,b) ((a)>(b) ? (a) : (b))
 
+//chaque fonction init en o(n) set lut o(1) o qqch ordre grandeur
+//lut s'apppliquent sur noir et blanc, modif canaux pas parcours pixels
 
-LUT* addLum(LUT *lut, int param) {
-    LUT* copied = copy(lut);
-    for(int i=0; i<copied->size; i++) {
-        copied->rvb[i].r = min(255, (int)(copied->rvb[i].r+param));
-        copied->rvb[i].v = min(255, (int)(copied->rvb[i].v+param));
-        copied->rvb[i].b = min(255, (int)(copied->rvb[i].b+param));
-    }
-    return copied;
-}
-
-//NOP
-LUT* dimLum(LUT *lut, int param) {
-    LUT* copied = copy(lut);
-     for(int i=0; i<copied->size; i++) {
-        copied->rvb[i].r = max(0, (int)(copied->rvb[i].r-param));
-        copied->rvb[i].v = max(0, (int)(copied->rvb[i].v-param));
-        copied->rvb[i].b = max(0, (int)(copied->rvb[i].b-param));
-    }
-    return copied;
-}
-
-// Change la valeur du contraste
-LUT* addCon(LUT *lut, int param) {
-    LUT* copied = copy(lut);
-    for(int i=0; i<copied->size; i++) {
-        copied->rvb[i].r = min(255, max(0, (float)param*(copied->rvb[i].r  - 128.) + 128.));          
-        copied->rvb[i].v = min(255, max(0, (float)param*(copied->rvb[i].v - 128.) + 128.));        
-        copied->rvb[i].b = min(255, max(0, (float)param*(copied->rvb[i].b - 128.) + 128.));
-    }
-    return copied;
-
-}
-
-LUT* dimCon(LUT *lut, int param) {
-     LUT* copied = copy(lut);
-     float a = 1. / param;
-    for(int i=0; i<copied->size; i++) {
-    
-       copied->rvb[i].r = min(255, max(0, (float)a*(copied->rvb[i].r - 128.) + 128.));          
-       copied->rvb[i].v = min(255, max(0, (float)a*(copied->rvb[i].v - 128.) + 128.));        
-       copied->rvb[i].b = min(255, max(0, (float)a*(copied->rvb[i].b - 128.) + 128.));
-    }
-    return copied;
-}
-
-LUT* augmentationR(LUT *lut, int param) {
-    LUT* copied = copy(lut);
-    for(int i =0; i<copied->size; i++) {
-        copied->rvb[i].r = min(255, param+i);
-
-    }
-    return copied;
-}
-
-LUT* augmentationV(LUT *lut, int param) {
-    LUT* copied = copy(lut);
-    for(int i=0; i<copied->size; i++) {
-        copied->rvb[i].v = min(255, param+i);
-    }
-    return copied;
-}
-
-LUT* augmentationB(LUT *lut, int param) {
-      LUT* copied = copy(lut);
-    for(int i=0; i<copied->size; i++) {
-        copied->rvb[i].b = min(255, param+i);
-    }
-    return copied;
-}
-
-LUT* seuil(LUT *lut)
+LUT invert_table()
 {
-    LUT* copied = copy(lut);
-    for(int i=0; i<copied->size; i++) {
-        if (copied->rvb[i].r <= 127 || copied->rvb[i].v <= 127 || copied->rvb[i].b <=127)
+    LUT lut;
+    for(int i=0; i<256; i++)
+    {
+        lut.table[i] = 255-i;
+    }
+    return lut;
+}
+
+LUT3D sepia() {
+    LUT3D lut;
+    for(int i =0 ; i<256; i++) {
+        int tr, tv, tb;
+        tr = (0.393*i) + (0.769*i) + (0.189*i);
+        tv = (0.349*i) + (0.686*i) + (0.168*i);
+        tb = (0.272*i) + (0.534*i) + (0.131*i);
+        if(tr > 255)
         {
-            copied->rvb[i].r = 0;
-            copied->rvb[i].v = 0;
-            copied->rvb[i].b = 0;
+            tr = 255;
+        }
+        if(tv>255)
+        {
+            tv = 255;
+        }
+        if(tb>255)
+        {
+            tb = 255;
+        }
+        lut.r[i] = tr;
+        lut.v[i] = tv;
+        lut.b[i] = tb;
+    }
+    return lut;
+}
+
+LUT3D stamp()
+{
+    LUT3D lut;
+    for(int i=0; i<256; i++) {
+        if (i <= 127)
+        {
+            lut.r[i] = 0;
+            lut.v[i] = 0;
+            lut.b[i] = 0;
 
         }
 
         else
         {
-            copied->rvb[i].r = 255;
-            copied->rvb[i].v = 255;
-            copied->rvb[i].b = 255;
+           lut.r[i] = 255;
+           lut.v[i] = 255;
+           lut.b[i] = 255;
         }
        
     }
-    return copied;
+    return lut;
 }
 
-LUT* sepia(LUT *lut) {
-    //try to see why blue is cramed af
-    LUT* copied = copy(lut);
-    // if we want to change transparency int alpha = 255;
-    for(int i =0 ; i<copied->size; i++) {
-        int tr, tv, tb;
-        tr = 0.393*(copied->rvb[i].r) + 0.769*(copied->rvb[i].v) + 0.189*(copied->rvb[i].b);
-        tv = 0.349*(copied->rvb[i].r) + 0.686*(copied->rvb[i].v) + 0.168*(copied->rvb[i].b);
-        tb = 0.272*(copied->rvb[i].r) + 0.534*(copied->rvb[i].v) + 0.131*(copied->rvb[i].b);
-        copied->rvb[i].r = tr;
-        copied->rvb[i].v = tv;
-        copied->rvb[i].b = tb;
+LUT3D addPixel(int param, unsigned char pixel)
+{
+    LUT3D lut;
+
+    for(int i=0; i<256; i++) {  
+        if(pixel == 'r')
+        {
+            lut.r[i] = min(255, param+i);
+        }
+
+        else if(pixel == 'v')
+        {
+            lut.v[i] = min(255, param+i);
+        }
+
+        else if(pixel == 'b')
+        {
+            lut.b[i] = min(255, param+i);
+        }
     }
-    return copied;
+    return lut;
 }
 
-LUT *saveLUT(LUT* lut) {
-    LUT* copied = copy(lut);
-    printf("in: ");
-    for (int i = 0; i <= copied->size; i++) {
-        printf("%d ", i);
-    }
-    printf("\n");
+LUT3D tint(int kelvin)
+{
+        LUT3D lut;
 
-    printf("to: ");
-    for (int i = 0; i <= copied->size; i++) {
-        printf("%d %d %d", copied->rvb[i].r, copied->rvb[i].v, copied->rvb[i].b);
+    static double tmp;
+    static double tmp2;
+    //converte kelvin to degree
+    if(kelvin < 1000)
+    {
+        kelvin = 1000;
     }
-    printf("\n");
 
-    return copied;
+    if(kelvin > 40000)
+    {
+        kelvin = 40000;
+    }
+
+    kelvin = kelvin / 100;
+
+ for(int i=0; i<256; i++) {  
+    if(kelvin <=66)
+    {
+        lut.r[i] = 255;
+        tmp = kelvin;
+        tmp = 99.470825861 * (log(tmp) - 161.1195681661);
+        lut.v[i] = tmp;
+        if (lut.v[i] < 0 )
+        {
+            lut.v[i] = 0;
+        }
+
+        if(lut.v[i] > 255)
+        {
+            lut.v[i] = 255;
+        }
+    }
+
+    if(kelvin>=66)
+    {
+          lut.b[i] = 255;
+    }
+
+    else if(kelvin<=19)
+    {
+          lut.b[i] = 0;
+    }
+
+    else
+    {
+        tmp = kelvin - 60;
+        tmp = 329.698727446 * pow(tmp,-0.1332047592);
+        lut.r[i] = tmp;
+
+        if(lut.r[i] < 0 )
+        {
+            lut.r[i] = 0;
+        }
+        if(lut.r[i]>255)
+            {lut.r[i] = 255;
+            }
+        tmp2 = kelvin-10;
+        tmp2 = 138.5177312231 * (log(tmp2) - 305.0447927307);
+        lut.b[i] = tmp2;
+        if(lut.b[i]<0)
+        {
+            lut.b[i] = 0;
+        }
+
+        if(lut.b[i]>255)
+        {
+            lut.b[i] = 255;
+        }
+    }
+
+
 }
+    return lut;
+}
+
+
+LUT3D blacknwh()
+{
+    LUT3D lut;
+    for(int i=0; i<256; i++) {
+        int avg = (lut.r[i] + lut.v[i] + lut.b[i]) / 3;
+        lut.r[i] = avg;
+        lut.v[i] = avg;
+        lut.b[i] = avg;
+
+    }
+    return lut;
+}
+
+
+
+//0% noir, 100% blanc
+// contraste = différence entre zone claires et sombres d'une img
+
+LUT addLum(int param) {
+    LUT lut;
+    for (int i = 0; i < 256; i++) {
+        lut.table[i] = min(255, param + i);
+    }
+    
+    return lut;
+}
+
+LUT dimLum(int param) {
+    LUT lut;
+        for(int i=0; i < 256 ; i++) {
+        lut.table[i] = max(0, i - param);
+    }
+    return lut;
+}
+
+
+
+LUT addCon(int param) {
+    LUT lut;
+    for (int i = 0 ; i < 256 ; i++){
+        lut.table[i] = min(255, max(0, (float)param*(i - 128.) + 128.));          
+    }
+    return lut;
+
+}
+
+LUT dimCon(int param) {
+    LUT lut;
+      double brightness = 0;
+    double contrastFactor = (259.0 * ((-param) + 255.0)) / (255.0 * ( 259.0 - (-param)));
+    for (int i = 0; i < 256 ; i++) {
+        brightness = contrastFactor * (lut.table[i] - 128) + 128;
+        if (brightness > 255) { brightness = 255; }
+        if (brightness < 0) { brightness = 0; }
+        lut.table[i] = (unsigned char) brightness;
+    }
+    return lut;
+}
+
