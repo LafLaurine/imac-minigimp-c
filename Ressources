@@ -1,21 +1,17 @@
+PPM :
+http://paulbourke.net/dataformats/ppm/
 https://rosettacode.org/wiki/Bitmap/Write_a_PPM_file#C
-
-https://sourceforge.net/p/netpbm/code/HEAD/tree/stable/lib/libppm1.c
-
 https://stackoverflow.com/questions/2693631/read-ppm-file-and-store-it-in-an-array-coded-with-c
-
 http://netpbm.sourceforge.net/doc/ppm.html
 
 LUTS : 
-https://github.com/fiji/fiji/tree/master/luts
+http://www.tannerhelland.com/4435/convert-temperature-rgb-algorithm-code/
+https://www.mochima.com/articles/LUT/LUT.html
+https://www.dyclassroom.com/image-processing-project/how-to-convert-a-color-image-into-sepia-image
+https://docs.opencv.org/2.4/doc/tutorials/core/basic_linear_transform/basic_linear_transform.html
 https://www.mochima.com/articles/LUT/LUT.html
 
-http://paulbourke.net/dataformats/ppm/
-
-http://homepages.inf.ed.ac.uk/rbf/BOOKS/PHILLIPS/cips2ed.pdf
-
-https://docs.opencv.org/2.4/doc/tutorials/core/basic_linear_transform/basic_linear_transform.html
-
-LUT SEPIA : 
-https://www.dyclassroom.com/image-processing-project/how-to-convert-a-color-image-into-sepia-image
-
+Maths et traitements d'images : 
+https://cel.archives-ouvertes.fr/cel-00125868v4/document
+https://images.math.cnrs.fr/Le-traitement-numerique-des-images.html
+http://www.f-legrand.fr/scidoc/docimg/image/filtrage/convolution/convolution.html
