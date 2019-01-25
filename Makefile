@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-Wall -O2 -Wno-unused-result -g 
 LIB = -lm
-OBJ = main.o image.o lut.o histogram.o conversion.o
+OBJ = main.o image.o lut.o histogram.o conversion.o effects.o
 DIRNAME = $(shell basename $$PWD)
 BIN = ./bin/minigimp
 RM = rm -f
@@ -29,7 +29,11 @@ conversion.o : ./src/conversion.c ./src/conversion.h
 	$(CC) $(CFLAGS) -c $<
 	@echo "Compil conversion LUT ok"
 
-main.o: ./src/main.c image.o lut.o histogram.o
+effects.o : ./src/effects.c ./src/effects.h
+	$(CC) $(CFLAGS) -c $<
+	@echo "Compil effects ok"
+
+main.o: ./src/main.c image.o effects.o lut.o conversion.o histogram.o 
 	$(CC) $(CFLAGS) -c $<
 	@echo "Compil main ok"
 
