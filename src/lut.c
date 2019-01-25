@@ -8,36 +8,6 @@
 #define min(a,b) ((a)<(b) ? (a) : (b))
 #define max(a,b) ((a)>(b) ? (a) : (b))
 
-/*
-int init_LUTs(LUT* lut)
-{
-    lut->table = malloc(256 * sizeof(int));
-    if(lut->table == NULL)
-    {
-        printf("%s\n", "Error, data is null");
-        return EXIT_FAILURE;
-    }
-    for(unsigned int i = 0; i< 256; i++)
-    {
-        lut->table[i] = (int) i;
-    }
-    return EXIT_SUCCESS;
-}
-
-
-int clear_LUTs(LUT *lut) {
-        free(lut->table);
-    
-    return EXIT_SUCCESS;
-        
-}
-
-int LUTs_retirerDerniere(LUT *lut) {
-    LUT *prec = lut->previous;
-    free(lut->next);
-    lut->next = prec;
-}*/
-
 
 //Init LUT
 void init(LUT *lut)
@@ -46,9 +16,18 @@ void init(LUT *lut)
     {
         lut->table[i] = 0;
     }
+    lut->next = NULL;
 }
 
-//INit 3D LUT
+
+LUT *removeFirst(LUT *lut) {
+    LUT *rest;
+    rest = lut->next;
+    free(lut);
+    return rest;
+}
+
+//Init 3D LUT
 void init3D(LUT3D *lut3D)
 {
     for(int i =0 ; i<256; i++) 
@@ -143,6 +122,27 @@ void addPixel(LUT3D *lut3D, int param, unsigned char pixel)
     }
 }
 
+//removePixel
+void removePixel(LUT3D *lut3D, int param, unsigned char pixel)
+{
+    for(int i=0; i<256; i++) {  
+        if(pixel == 'r')
+        {
+            lut3D->r[i] = max(0, param-i);
+        }
+
+        else if(pixel == 'v')
+        {
+            lut3D->v[i] = max(0, param-i);
+        }
+
+        else if(pixel == 'b')
+        {
+            lut3D->b[i] = max(0, param-i);
+        }
+    }
+}
+
 //tint. To do : make it works
 void tint(LUT3D *lut3D, int kelvin)
 {
@@ -225,29 +225,7 @@ void tint(LUT3D *lut3D, int kelvin)
 }
 
 
-//Kinda doesn't work now
-void blacknwh(LUT3D *lut3D)
-{
-    for(int i=0; i<256; i++) 
-    {
-        int avg = (lut3D->r[i] + lut3D->v[i] + lut3D->b[i]) / 3;
-        lut3D->r[i] = avg;
-        lut3D->v[i] = avg;
-        lut3D->b[i] = avg;
 
-    }
-}
-
-/*
-LUT bord()
-{
-    for(int i=0; i<256; i++) {
-        int a = lut.table[i+1];
-        int b = lut.table[i+2];
-
-    }
-    return lut;
-}*/
 
 //Add luminosity
 void addLum(LUT *lut, int param) {
@@ -288,6 +266,15 @@ void dimCon(LUT *lut,int param) {
 void ln(LUT *lut, int param) {
     for(int i=0; i<256; i++) {
         lut->table[i] = min(255, log(i)*(255-param)/5.0 +param);
+    }
+}
+
+//cyan
+void cyan(LUT3D *lut3D)
+{
+    for(int i =0; i<256; i++)
+    {
+        lut3D->r[i] = 255-i;  
     }
 }
 

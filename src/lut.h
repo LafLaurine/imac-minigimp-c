@@ -1,13 +1,10 @@
 #ifndef LUT_H
 #define LUT_H
 
-#include <stdint.h>
-#include <stdbool.h>
-
 typedef struct LUT
 {
 	unsigned char table[256];
-	//LUT *previous, *next;
+	struct LUT *next;
 }LUT;
 
 
@@ -17,18 +14,19 @@ typedef struct LUT3D{
 	unsigned char b[256];
 }LUT3D;
 
-/*
-int init_LUTs(LUT* lut);
-int clear_LUTs(LUT *lut);*/
+/*int clear_LUTs(LUT *lut);*/
 void init(LUT *lut);
 void init3D(LUT3D *lut3D);
+LUT *removeFirst(LUT *lut);
 
 
 void sepia(LUT3D *lut3D);
 void seuil(LUT3D *lut3D, int param);
 void addPixel(LUT3D *lut3D, int param, unsigned char pixel);
+void removePixel(LUT3D *lut3D, int param, unsigned char pixel);
 void tint(LUT3D *lut3D, int kelvin);
-void blacknwh(LUT3D *lut3D);
+void cyan(LUT3D *lut3D);
+
 
 void invert_table(LUT *lut);
 void addLum(LUT *lut, int param);

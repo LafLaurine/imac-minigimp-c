@@ -40,10 +40,9 @@ void appliquerLUTChannel(PPMImage *img, LUT3D *lut3D, unsigned char pixel) {
 //Apply 3D LUT
 void appliquerLUT3D(PPMImage *img, LUT3D *lut3D) {
     for(int i = 0 ; i< img->width*img->height; i++) {
-        int avg = 0.3 * img->rvb[i].r + 0.59 * img->rvb[i].v + 0.11 * img->rvb[i].b;
-        img->rvb[i].r = lut3D->r[avg];
-        img->rvb[i].v = lut3D->v[avg];
-        img->rvb[i].b = lut3D->b[avg];
+        img->rvb[i].r = lut3D->r[img->rvb[i].r];
+        img->rvb[i].v = lut3D->v[img->rvb[i].v];
+        img->rvb[i].b = lut3D->b[img->rvb[i].b];
     }
 }
 
@@ -81,6 +80,45 @@ void greyScaleToRGB (LUT* lut, PPMImage *image)
         else
         {
             image->rvb[i].b = image->rvb[i].b - lut->table[image->greyScale[i]];
+        }
+    }
+}
+
+
+//COnvert greyScaleale to RGB
+void greyScaleToRGB3D (LUT3D* lut, PPMImage *image)
+{
+    for(int i =0; i<image->width*image->height; i++)
+    {
+        //test if rvb > lut to avoid negative values
+        if(lut->r[image->greyScale[i]] > image->rvb[i].r)
+        {
+            image->rvb[i].r = lut->r[image->greyScale[i]] - image->rvb[i].r;   
+        }
+
+        else
+        {
+            image->rvb[i].r = image->rvb[i].r - lut->r[image->greyScale[i]];
+        }
+
+        if(lut->v[image->greyScale[i]] > image->rvb[i].v)
+        {
+            image->rvb[i].v = lut->v[image->greyScale[i]] - image->rvb[i].v;   
+        }
+
+        else
+        {
+            image->rvb[i].v = image->rvb[i].v - lut->v[image->greyScale[i]];
+        }
+
+        if(lut->b[image->greyScale[i]] > image->rvb[i].b)
+        {
+            image->rvb[i].b = lut->b[image->greyScale[i]] - image->rvb[i].b;   
+        }
+
+        else
+        {
+            image->rvb[i].b = image->rvb[i].b - lut->b[image->greyScale[i]];
         }
     }
 }

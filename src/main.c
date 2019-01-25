@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "image.h"
 #include "lut.h"
+#include "effects.h"
 #include "histogram.h"
 #include "conversion.h"
 
@@ -84,11 +85,19 @@ int main(int argc, char *argv[]) {
         appliquerLUT3D(&img,&lut3D);
       }
 
+      //noise
+      else if (strcmp(argv[i], "NOISE") == 0)
+      {
+        int param;
+        sscanf(argv[i+1],"%d",&param);
+        if (param > 255) { param = 255; }
+        bruit(&img,param);
+      }
+
       //black and white
       else if (strcmp(argv[i], "BLACKNWHITE") == 0)
       {
-        blacknwh(&lut3D);
-        appliquerLUT3D(&img,&lut3D);
+        blacknwh(&img);
       }
 
       //add contrast
@@ -123,6 +132,18 @@ int main(int argc, char *argv[]) {
         appliquerLUTChannel(&img,&lut3D,pixel);
       }
 
+      //remove some color. Use : REMOVEPIXEL 'r'/'v'/'b' PARAM
+      else if (strcmp(argv[i], "REMOVEPIXEL") == 0)
+      {
+        int param;
+        unsigned char pixel;
+        sscanf(argv[i+2],"%d",&param);
+        if (param > 255) { param = 255; }
+        sscanf(argv[i+1],"%c",&pixel);
+        removePixel(&lut3D,param,pixel);
+        appliquerLUTChannel(&img,&lut3D,pixel);
+      }
+
       //Tint but doesn't really work
       else if (strcmp(argv[i], "TINT") == 0)
       {
@@ -132,6 +153,12 @@ int main(int argc, char *argv[]) {
         appliquerLUT3D(&img,&lut3D);
       }
 
+      else if (strcmp(argv[i], "CYAN") == 0)
+      {
+        cyan(&lut3D);
+        greyScaleToRGB3D(&lut3D,&img);
+      }
+
       //Logarithm luminosity
       else if (strcmp(argv[i], "LOG") == 0)
       {
@@ -139,6 +166,16 @@ int main(int argc, char *argv[]) {
         sscanf(argv[i+1],"%d",&param);
         ln(&lut,param);
         appliquerLUT(&img,&lut);
+      }
+
+      else if (strcmp(argv[i], "SWAP") == 0)
+      {
+        swap(&img);
+      }
+
+      else if (strcmp(argv[i], "REMOVE") == 0)
+      {
+        removeFirst(&lut);
       }
 
       //Handle image name
@@ -172,8 +209,6 @@ int main(int argc, char *argv[]) {
 
     //free memory
     clear(&img);
-    //clear_LUTs(&lut);
-
 }
 
 //Input none
